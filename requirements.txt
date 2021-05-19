@@ -1,0 +1,6 @@
+pandas
+numpy
+scapy
+tqdm
+scikit-learn
+pandarallel
