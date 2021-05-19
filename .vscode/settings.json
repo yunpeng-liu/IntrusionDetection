@@ -1,0 +1,12 @@
+{
+    "python.analysis.extraPaths": [
+        "./code"
+    ],
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/.hg/store/**": true,
+        "**/processed_data/**": true
+    }
+}
