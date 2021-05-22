@@ -1,15 +1,17 @@
 #%%
+import json
+import os
+import pickle
+from collections import defaultdict
+from multiprocessing import Pool
+from pprint import pprint
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os, json
-from multiprocessing import Pool
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-from collections import defaultdict
 from scipy import stats
-from pprint import pprint
 from sklearn.preprocessing import MultiLabelBinarizer, OneHotEncoder
-import pickle
+from tqdm import tqdm
 
 plt.style.use(['science', 'grid'])
 plt.rc('figure', dpi=200)
@@ -115,7 +117,7 @@ def extract_flow_info(path: str):
         # update default TLS feature in case that some feature do not exist
         result.update({
             'is_tls': float(len(records) > 0),
-            'tls_has_server_hello': False,
+            'tls_has_server_hello': 0,
             'tls_num_ciphers': 1,
             'tls_ciphers': [],
             'tls_cipher_chosen': 0,
@@ -225,5 +227,5 @@ train_df = pd.concat([train_df] + encoded_features[0::2], axis=1)
 test_df = pd.concat([test_df] + encoded_features[1::2], axis=1)
 
 # %%
-train_df.to_csv('../features/flow_feature_train.csv')
-test_df.to_csv('../features/flow_feature_test.csv')
+train_df.to_csv('../features/flow_feature_train.csv', index=None)
+test_df.to_csv('../features/flow_feature_test.csv', index=None)

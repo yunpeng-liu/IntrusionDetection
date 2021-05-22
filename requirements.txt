@@ -4,3 +4,6 @@ scapy
 tqdm
 scikit-learn
 pandarallel
+lightgbm
+scipy
+matplotlib
