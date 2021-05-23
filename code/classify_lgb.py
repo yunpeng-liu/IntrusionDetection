@@ -80,11 +80,15 @@ def preprocess_dataset(train_df: pd.DataFrame, test_df: pd.DataFrame, phase=1, v
     labeled_train_data = train_df[is_labeled]
     label = is_black.to_numpy()[is_labeled.to_numpy()].astype(np.float)
 
-    train_data, val_data, train_label, val_label = train_test_split(train_data, label, test_size=val_ratio, shuffle=True, random_state=seed, stratify=label)
+    if val_ratio > 0:
+        train_data, val_data, train_label, val_label = train_test_split(train_data, label, test_size=val_ratio, shuffle=True, random_state=seed, stratify=label)
+    else:
+        train_label = label
+        val_data = val_label = None
     return train_data, train_label, val_data, val_label, test
 
 
-train_data, train_label, val_data, val_label, test_data = preprocess_dataset(train_df, test_df)
+train_data, train_label, val_data, val_label, test_data = preprocess_dataset(train_df, test_df, val_ratio=0.1)
 
 # %%
 
@@ -147,7 +151,8 @@ def get_val_score(val_label, val_pred):
     print(HOST_THRES, np.max(tpr - fpr))
 
 models, val_pred = train_model(train_data, train_label, val_data, val_label)
-get_val_score(val_label, val_pred)
+if val_data is not None:
+    get_val_score(val_label, val_pred)
 
 #%%
 #! Flow threshold
@@ -223,8 +228,8 @@ th      score
 0.3     64.9
 0.2     64.6
 """
-th = 0.3
-test_host_pred = pred.groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
+th = 0.4
+test_host_pred = pred.groupby('sip').agg(lambda x: (x > 0.5).sum() / x.shape[0])
 
 test_black = test_host_pred.index[test_host_pred[0] > th]
 print(test_black.shape)
