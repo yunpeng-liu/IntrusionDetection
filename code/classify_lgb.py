@@ -194,10 +194,39 @@ def predict_test(models, test_data, threshold):
 test_pred = predict_test(models, test_data, THRES)
 
 pred = pd.DataFrame(test_pred, index=test_data['sip'])
-# test_host_pred = pred.groupby('sip').mean()
+
+#%%
+#!  根据主机所有流分数的平均来进行标注
+"""
+th      score
+0.5     60
+0.4     65.2
+0.2     64.6
+
+两种评分汇聚方法没有区别
+"""
+th = 0.4
+test_host_pred = pred.groupby('sip').mean()
+
+test_black = test_host_pred.index[test_host_pred[0] > th]
+print(test_black.shape)
+with open('../result_lgb.txt', 'w') as f:
+    f.write(' '.join(test_black))
+
+
+#%%
+#!  根据主机恶意流的比例来进行标注
+"""
+th      score
+0.5     60
+0.4     65.2
+0.3     64.9
+0.2     64.6
+"""
+th = 0.3
 test_host_pred = pred.groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
 
-test_black = test_host_pred.index[test_host_pred[0] > 0.5]
+test_black = test_host_pred.index[test_host_pred[0] > th]
 print(test_black.shape)
-with open('../result.txt', 'w') as f:
+with open('../result_lgb.txt', 'w') as f:
     f.write(' '.join(test_black))
