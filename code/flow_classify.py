@@ -101,12 +101,12 @@ def train_model(train_data: pd.DataFrame, train_label: np.ndarray, test_data: pd
         x_val = train_data.iloc[val_idx, 3:]
         y_val = train_label[val_idx]
 
-        logging.info(f'Fold {fold_id} training...')
+        logging.info(f'Fold {fold_id} training...' + '=' * 50)
 
         model = lgb.LGBMClassifier(
             num_leaves=64,
             max_depth=10,
-            learning_rate=0.05,
+            learning_rate=0.01,
             n_estimators=10000,
             subsample=0.8,
             reg_alpha=0.5,
@@ -128,17 +128,36 @@ def train_model(train_data: pd.DataFrame, train_label: np.ndarray, test_data: pd
     
     return models, test_prob
 
+def get_val_score(val_label, val_pred):
+    host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').mean()
+    host_label = label_host(host_pred.index)
+    fpr, tpr, threshold = roc_curve(host_label, host_pred)
+    auc = roc_auc_score(host_label, host_pred)
+    plt.figure(figsize=(8, 3))
+    plt.subplot(1, 2, 1)
+    plt.plot(fpr, tpr)
+    plt.title(f'{auc=:.3f}')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(threshold, tpr - fpr)
+    plt.show()
+
+    HOST_THRES = threshold[np.argmax(tpr - fpr)]
+    print(HOST_THRES, np.max(tpr - fpr))
+
 models, val_pred = train_model(train_data, train_label, val_data, val_label)
+get_val_score(val_label, val_pred)
 
 #%%
 #! Flow threshold
 fpr, tpr, threshold = roc_curve(val_label, val_pred)
 auc = roc_auc_score(val_label, val_pred)
+plt.figure(figsize=(8, 3))
+plt.subplot(1, 2, 1)
 plt.plot(fpr, tpr)
 plt.title(f'{auc=:.3f}')
-plt.show()
 
-#%%
+plt.subplot(1, 2, 2)
 plt.plot(threshold, tpr - 1.5 * fpr)
 plt.show()
 
@@ -151,14 +170,16 @@ host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').mean()
 host_label = label_host(host_pred.index)
 fpr, tpr, threshold = roc_curve(host_label, host_pred)
 auc = roc_auc_score(host_label, host_pred)
+plt.figure(figsize=(8, 3))
+plt.subplot(1, 2, 1)
 plt.plot(fpr, tpr)
 plt.title(f'{auc=:.3f}')
+
+plt.subplot(1, 2, 2)
+plt.plot(threshold, tpr - fpr)
 plt.show()
 
-plt.plot(threshold, tpr - 1.5 * fpr)
-plt.show()
-
-HOST_THRES = threshold[np.argmax(tpr - 1.5 * fpr)]
+HOST_THRES = threshold[np.argmax(tpr - fpr)]
 print(HOST_THRES)
 
 #%%
@@ -171,10 +192,10 @@ def predict_test(models, test_data, threshold):
 
 test_pred = predict_test(models, test_data, THRES)
 
-# %%
 pred = pd.DataFrame(test_pred, index=test_data['sip'])
 test_host_pred = pred.groupby('sip').mean()
 
 test_black = test_host_pred.index[test_host_pred[0] > HOST_THRES]
+print(test_black.shape)
 with open('../result.txt', 'w') as f:
     f.write(' '.join(test_black))
