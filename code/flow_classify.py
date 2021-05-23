@@ -109,6 +109,7 @@ def train_model(train_data: pd.DataFrame, train_label: np.ndarray, test_data: pd
             learning_rate=0.01,
             n_estimators=10000,
             subsample=0.8,
+            feature_fraction=0.6,
             reg_alpha=0.5,
             reg_lambda=0.5,
         )
@@ -166,7 +167,7 @@ print(THRES)
 
 #%%
 #! Host threshold
-host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').mean()
+host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
 host_label = label_host(host_pred.index)
 fpr, tpr, threshold = roc_curve(host_label, host_pred)
 auc = roc_auc_score(host_label, host_pred)
@@ -193,9 +194,10 @@ def predict_test(models, test_data, threshold):
 test_pred = predict_test(models, test_data, THRES)
 
 pred = pd.DataFrame(test_pred, index=test_data['sip'])
-test_host_pred = pred.groupby('sip').mean()
+# test_host_pred = pred.groupby('sip').mean()
+test_host_pred = pred.groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
 
-test_black = test_host_pred.index[test_host_pred[0] > HOST_THRES]
+test_black = test_host_pred.index[test_host_pred[0] > 0.5]
 print(test_black.shape)
 with open('../result.txt', 'w') as f:
     f.write(' '.join(test_black))
