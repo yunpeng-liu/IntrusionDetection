@@ -78,7 +78,7 @@ def preprocess_dataset(train_df: pd.DataFrame, test_df: pd.DataFrame, phase=1, v
     return train_data, train_label, val_data, val_label, test
 
 
-train_data, train_label, val_data, val_label, test_data = preprocess_dataset(train_df, test_df, val_ratio=0)
+train_data, train_label, val_data, val_label, test_data = preprocess_dataset(train_df, test_df, phase=2, val_ratio=0)
 
 # %%
 black_train_flows = train_data.loc[train_label.astype(bool)]
@@ -94,6 +94,13 @@ th      score
 0.9     73.85
 0.8     73.75
 0.5     72.95
+
+full data
+th      score
+0.9     73.725
+0.8     75.3
+0.7     74.4
+0.5     74
 """
 
 test_matched_ips = []
@@ -103,7 +110,7 @@ for sip, dips in test_data[['sip', 'dip']].groupby('sip').agg(set)['dip'].iterit
         bs = dip_black_score.get(dip, 1e-5)
         ws = dip_white_score.get(dip, 1e-5)
         dip_scores.append(bs / (bs + ws))
-    if max(dip_scores) > 0.9:
+    if max(dip_scores) > 0.8:
         test_matched_ips.append(sip)
 
 len(test_matched_ips)
