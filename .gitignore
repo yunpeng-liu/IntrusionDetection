@@ -1,6 +1,7 @@
 *.tgz
 *.gz
 *.bz2
+*.pkl
 **/__pycache__/
 dataset/*
 processed_data/*

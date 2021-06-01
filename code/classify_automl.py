@@ -98,72 +98,84 @@ train_data, train_label, val_data, val_label, test_data = preprocess_dataset(tra
 # %%
 
 train_data['label'] = train_label
-predictor = TabularPredictor(label='label', path='../auto_model').fit(train_data.iloc[:, 3:], presets='best_quality')
+predictor = TabularPredictor(label='label', eval_metric="roc_auc", path='../auto_model').fit(train_data.iloc[:, 3:], presets='best_quality')
 
-sys.exit(0)
+if __name__ == '__main__':
+    sys.exit(0)
+
+#%%
+
+predictor = TabularPredictor(label='label', path='../auto_model').load(path='../auto_model')
+
+#%%
+
+test_pred = predictor.predict_proba(test_data)
+
 
 #%%
 #! Flow threshold
-fpr, tpr, threshold = roc_curve(val_label, val_pred)
-auc = roc_auc_score(val_label, val_pred)
-plt.figure(figsize=(8, 3))
-plt.subplot(1, 2, 1)
-plt.plot(fpr, tpr)
-plt.title(f'{auc=:.3f}')
+# fpr, tpr, threshold = roc_curve(val_label, val_pred)
+# auc = roc_auc_score(val_label, val_pred)
+# plt.figure(figsize=(8, 3))
+# plt.subplot(1, 2, 1)
+# plt.plot(fpr, tpr)
+# plt.title(f'{auc=:.3f}')
 
-plt.subplot(1, 2, 2)
-plt.plot(threshold, tpr - 1.5 * fpr)
-plt.show()
+# plt.subplot(1, 2, 2)
+# plt.plot(threshold, tpr - 1.5 * fpr)
+# plt.show()
 
-THRES = threshold[np.argmax(tpr - 1.5 * fpr)]
-print(THRES)
+# THRES = threshold[np.argmax(tpr - 1.5 * fpr)]
+# print(THRES)
 
-#%%
-#! Host threshold
-host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
-host_label = label_host(host_pred.index)
-fpr, tpr, threshold = roc_curve(host_label, host_pred)
-auc = roc_auc_score(host_label, host_pred)
-plt.figure(figsize=(8, 3))
-plt.subplot(1, 2, 1)
-plt.plot(fpr, tpr)
-plt.title(f'{auc=:.3f}')
+# #%%
+# #! Host threshold
+# host_pred = pd.DataFrame(val_pred, index=val_data['sip']).groupby('sip').agg(lambda x: (x > 0.528).sum() / x.shape[0])
+# host_label = label_host(host_pred.index)
+# fpr, tpr, threshold = roc_curve(host_label, host_pred)
+# auc = roc_auc_score(host_label, host_pred)
+# plt.figure(figsize=(8, 3))
+# plt.subplot(1, 2, 1)
+# plt.plot(fpr, tpr)
+# plt.title(f'{auc=:.3f}')
 
-plt.subplot(1, 2, 2)
-plt.plot(threshold, tpr - fpr)
-plt.show()
+# plt.subplot(1, 2, 2)
+# plt.plot(threshold, tpr - fpr)
+# plt.show()
 
-HOST_THRES = threshold[np.argmax(tpr - fpr)]
-print(HOST_THRES)
+# HOST_THRES = threshold[np.argmax(tpr - fpr)]
+# print(HOST_THRES)
 
-#%%
-def predict_test(models, test_data, threshold):
-    pred_score = 0
-    for model in models:
-        pred_test = model.predict_proba(test_data.iloc[:, 3:], num_iteration=model.best_iteration_)[:, 1]
-        pred_score += pred_test / 5
-    return (pred_score > threshold).astype(float)
+# #%%
+# def predict_test(models, test_data, threshold):
+#     pred_score = 0
+#     for model in models:
+#         pred_test = model.predict_proba(test_data.iloc[:, 3:], num_iteration=model.best_iteration_)[:, 1]
+#         pred_score += pred_test / 5
+#     return (pred_score > threshold).astype(float)
 
-test_pred = predict_test(models, test_data, THRES)
+# test_pred = predict_test(models, test_data, THRES)
 
-pred = pd.DataFrame(test_pred, index=test_data['sip'])
+# pred = pd.DataFrame(test_pred, index=test_data['sip'])
 
 #%%
 #!  根据主机所有流分数的平均来进行标注
 """
 th      score
-0.5     60
-0.4     65.2
-0.2     64.6
+0.6     76.55
+0.55    77.25
+0.5     77.45
 
 两种评分汇聚方法没有区别
 """
-th = 0.4
+th = 0.6
+pred = pd.DataFrame(test_pred[1])
+pred['sip'] = test_data['sip']
 test_host_pred = pred.groupby('sip').mean()
 
-test_black = test_host_pred.index[test_host_pred[0] > th]
+test_black = test_host_pred.index[test_host_pred[1] > th]
 print(test_black.shape)
-with open('../result_lgb.txt', 'w') as f:
+with open('../result_automl.txt', 'w') as f:
     f.write(' '.join(test_black))
 
 
@@ -189,3 +201,8 @@ test_black = test_host_pred.index[test_host_pred[0] > th]
 print(test_black.shape)
 with open('../result_lgb.txt', 'w') as f:
     f.write(' '.join(test_black))
+
+
+#%%
+import pickle
+pickle.dump(pred, open('../features/auto_test_pred.pkl', 'wb'))
