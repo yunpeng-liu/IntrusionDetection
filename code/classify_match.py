@@ -110,6 +110,10 @@ auto    th      score
 0.6     0.85    79.175
 0.65    0.74    77.05
 0.7     0.65    76.25
+
+nlp     result
+nlp     th      score
+0.5     0.75    75.075
 """
 
 test_matched_ips = []
@@ -119,11 +123,11 @@ for sip, dips in test_data[['sip', 'dip']].groupby('sip').agg(set)['dip'].iterit
         bs = dip_black_score.get(dip, 1e-5)
         ws = dip_white_score.get(dip, 1e-5)
         dip_scores.append(bs / (bs + ws))
-    if max(dip_scores) > 0.746:
+    if max(dip_scores) > 0.75:
         test_matched_ips.append(sip)
 
 len(test_matched_ips)
-lgb_ips = open('../result_automl.txt', 'r').readline().split(' ')
+lgb_ips = open('../result_nlp.txt', 'r').readline().split(' ')
 
 with open('../result.txt', 'w') as f:
     result = set(test_matched_ips) | set(lgb_ips)

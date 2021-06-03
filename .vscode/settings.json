@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "./code"
+        "./code",
+        "./code/FS-Net",
     ],
     "files.watcherExclude": {
         "**/.git/objects/**": true,
