@@ -98,10 +98,15 @@ train_data, train_label, val_data, val_label, test_data = preprocess_dataset(tra
 # %%
 
 train_data['label'] = train_label
-predictor = TabularPredictor(label='label', eval_metric="roc_auc", path='../auto_model').fit(train_data.iloc[:, 3:], presets='best_quality')
+predictor = TabularPredictor(label='label', eval_metric="roc_auc", path='../auto_model_temp').fit(
+    train_data.iloc[:, 3:], 
+    # presets='best_quality',
+)
 
-if __name__ == '__main__':
-    sys.exit(0)
+predictor.fit_summary()
+
+# if __name__ == '__main__':
+#     sys.exit(0)
 
 #%%
 

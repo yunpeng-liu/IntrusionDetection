@@ -141,7 +141,7 @@ def train_model(train_data: pd.DataFrame, train_label: np.ndarray, test_data: pd
             num_leaves=64,
             max_depth=10,
             learning_rate=0.1,
-            n_estimators=10000,
+            n_estimators=1000,
             subsample=0.8,
             feature_fraction=0.6,
             reg_alpha=0.01,
@@ -245,8 +245,8 @@ test_host_pred = pred.groupby('sip').mean()
 
 test_black = test_host_pred.index[test_host_pred[0] > th]
 print(test_black.shape)
-with open('../result_lgb.txt', 'w') as f:
-    f.write(' '.join(test_black))
+# with open('../result_lgb.txt', 'w') as f:
+#     f.write(' '.join(test_black))
 
 
 #%%
